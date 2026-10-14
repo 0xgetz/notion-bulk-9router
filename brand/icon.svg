@@ -1,0 +1,23 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="notion-bulk-9router icon">
+  <defs>
+    <linearGradient id="i-flow" x1="12" y1="12" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6EE7F9"/>
+      <stop offset="0.5" stop-color="#8B7CF6"/>
+      <stop offset="1" stop-color="#F472B6"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="64" height="64" rx="15" fill="#0B0C10"/>
+  <g>
+    <path d="M14 52V22c0-1.7 1.1-3.2 2.7-3.7l9.6-2.7c2.2-.6 4.4 1 4.4 3.3V52"
+          stroke="url(#i-flow)" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M14 22l16.7 30" stroke="url(#i-flow)" stroke-width="4.6" stroke-linecap="round"/>
+  </g>
+  <g stroke="url(#i-flow)" stroke-width="2.4" stroke-linecap="round">
+    <path d="M39 34c7 0 4-10 11-10"/>
+    <path d="M39 34h11"/>
+    <path d="M39 34c7 0 4 10 11 10"/>
+  </g>
+  <circle cx="52" cy="24" r="3.2" fill="#6EE7F9"/>
+  <circle cx="52" cy="34" r="3.8" fill="#8B7CF6"/>
+  <circle cx="52" cy="44" r="3.2" fill="#F472B6"/>
+</svg>

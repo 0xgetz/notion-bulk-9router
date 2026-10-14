@@ -1,0 +1,35 @@
+{
+  "name": "notion-bulk-9router",
+  "version": "1.0.0",
+  "description": "Bulk-create Notion accounts, auto-extract session cookies, and connect them all to 9Router as an OpenAI-compatible pool. Zero dependencies.",
+  "license": "MIT",
+  "keywords": [
+    "notion",
+    "notion-ai",
+    "9router",
+    "openai-compatible",
+    "proxy",
+    "bulk-accounts",
+    "browser-automation",
+    "cdp"
+  ],
+  "bin": {
+    "notion-bulk": "src/cli.js"
+  },
+  "main": "src/provision.js",
+  "scripts": {
+    "create": "node src/cli.js create",
+    "serve": "node src/cli.js serve",
+    "connect": "node src/cli.js connect",
+    "models": "node src/cli.js models",
+    "accounts": "node src/cli.js accounts"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "author": "0xgetz",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/0xgetz/notion-bulk-9router.git"
+  }
+}

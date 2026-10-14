@@ -1,0 +1,185 @@
+<div align="center">
+
+<img src="../brand/banner.svg" alt="notion-bulk-9router" width="640">
+
+### Notion アカウントを一括作成 → セッションを自動抽出 → 9Router 経由で配信
+
+*1 つのコマンドで N 個の Notion ワークスペースを作成し、各 `token_v2` を取得して、
+単一の 9Router エンドポイントの背後で負荷分散された OpenAI 互換プールに接続します。*
+
+<br>
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-8B7CF6.svg?style=flat-square)](../LICENSE)
+[![Node](https://img.shields.io/badge/node-%3E%3D18-6EE7F9.svg?style=flat-square)](../package.json)
+[![Dependencies](https://img.shields.io/badge/dependencies-0-F472B6.svg?style=flat-square)](#依存ゼロ)
+
+<br>
+
+[🇬🇧 English](../README.md) · [🇮🇩 Bahasa](README.id.md) · [🇨🇳 简体中文](README.zh.md) · [🇯🇵 日本語](README.ja.md) · [🇪🇸 Español](README.es.md)
+
+</div>
+
+---
+
+## これは何をするか
+
+Notion AI には**公開 API がなく**、内部の書き込みエンドポイントはデータセンター IP を
+拒否します。本ツールはそれを強みに変えます：
+
+1. **アカウントを一括作成** — ブラウザで実際の Notion サインアップウィザードを操作し、
+   使い捨て受信箱で各アカウントを認証します。
+2. **セッションを自動抽出** — ブラウザの Cookie jar から `token_v2` と
+   ワークスペース/ユーザー ID を直接取得します。
+3. **1 つの API として提供** — OpenAI 互換アダプタが各リクエストを*生きた Notion タブ内*で
+   実行し（住宅 IP + 本物の Cookie jar）、プール全体を **9Router** に登録します。
+
+```text
+notion-bulk create --count 5 --router http://127.0.0.1:20128
+```
+
+これだけ — 5 アカウント、5 セッション、1 プール。
+
+---
+
+## 機能
+
+| | |
+|---|---|
+| 🧬 **一括アカウント** | `--count N` で N ワークスペースを手動操作なしで登録 |
+| 🍪 **セッション自動取得** | CDP 経由で httpOnly `token_v2` を読み取り保存 |
+| 🌐 **住宅 IP リレー** | 書き込みをタブ内で実行し、データセンター IP 制限を突破 |
+| 🔁 **ラウンドロビン・プール** | アダプタが全アカウントに負荷分散 |
+| 🎯 **モデル選択** | 約 36 の利用可能な Notion モデルから選択 |
+| 🧩 **9Router 対応** | 1 コマンドで provider ノード + キーを登録 |
+| 📦 **依存ゼロ** | 純粋な Node ≥18 — 自前 CDP、`node_modules` なし |
+
+---
+
+## アーキテクチャ
+
+```text
+┌──────────┐   POST /v1/chat/completions    ┌──────────────┐
+│ クライアント│ ────────────────────────────► │  9Router     │  接頭辞: notion/*
+│ (Continue│                                │   :20128     │
+│  Cline…) │ ◄───────────────────────────── │              │
+└──────────┘        OpenAI 互換             └──────┬───────┘
+                                                   ▼
+                                          ┌──────────────────┐
+                                          │  adapter  :8790  │  ラウンドロビン
+                                          │  + フェイルオーバー│
+                                          └────────┬─────────┘
+                                                   ▼
+                                       ┌────────────────────────┐
+                                       │ browser-transport.js   │  fetch() は
+                                       │ (生きた app.notion.com) │  タブ内で実行
+                                       └────────────┬───────────┘
+                                                    ▼
+                                          ┌──────────────────┐
+                                          │   Notion AI      │
+                                          └──────────────────┘
+```
+
+詳細は [`STRUCTURE.md`](../STRUCTURE.md)、内部 API は
+[`docs/PROTOCOL.md`](../docs/PROTOCOL.md) を参照。
+
+---
+
+## クイックスタート
+
+### 1. ブラウザを準備
+
+**Browser Use cloud**（最も簡単 — 受信箱の Turnstile も自動解決）：
+
+```bash
+export BU_CDP_WS="wss://<あなたの-cdp-エンドポイント>"
+```
+
+**または**デバッグポート付きの自前 Chrome：
+
+```bash
+google-chrome --remote-debugging-port=9222 --user-data-dir=~/.chrome-notion
+export NOTION_CDP_URL="http://127.0.0.1:9222"
+```
+
+### 2. アカウント作成
+
+```bash
+node src/cli.js create --count 3 --domain mydomain.tld
+```
+
+各アカウントは `accounts.json` に書き込まれます。
+
+### 3. プールを起動
+
+```bash
+node src/cli.js serve            # OpenAI 互換アダプタ :8790
+```
+
+### 4. 9Router に登録
+
+```bash
+node src/cli.js connect --router http://127.0.0.1:20128
+```
+
+### 5. 使用
+
+```bash
+curl http://127.0.0.1:20128/v1/chat/completions \
+  -H "Authorization: Bearer sk-…" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"notion/baseten-deepseek-v4.1-flash",
+       "messages":[{"role":"user","content":"こんにちは"}]}'
+```
+
+---
+
+## コマンド
+
+| コマンド | 説明 |
+|---|---|
+| `create --count N` | N アカウントを一括作成し（任意で）9Router に接続 |
+| `serve` | `:8790` で OpenAI 互換アダプタを起動 |
+| `connect` | アダプタを 9Router の provider として登録 |
+| `models` | ライブの Notion モデル一覧（要ログインタブ） |
+| `extract` | ログイン済みタブから `token_v2` と ID を取得 |
+| `accounts` | アカウントストアを表示 |
+
+---
+
+## ブラウザリレーの仕組み
+
+| | データセンター IP | 住宅 IP |
+|---|:---:|:---:|
+| 読み取り (`getThreadTranscript`, `getAvailableModels`) | ✅ | ✅ |
+| 書き込み (`createAgentThread`, `sendEventToAgentThread`) | ❌ `UserValidationError` | ✅ |
+
+有効な Cookie だけでは**不十分** — Notion は書き込み元の IP を検査します。
+`browser-transport.js` は各書き込み `fetch()` を**生きた `app.notion.com`
+タブ内**で CDP 経由、`credentials: 'include'` で実行します。リレーモードでは
+セッション Cookie ヘッダーを**意図的に省略**します。
+
+---
+
+## 依存ゼロ
+
+`package.json` 依存も `node_modules` もありません。自前の `cdp.js`（純粋な CDP
+クライアント）、`browser-transport.js`、`dispose-mail.js` を同梱します。
+
+---
+
+## 要件・注意
+
+- **Node ≥ 18**（グローバル `fetch` と `WebSocket` を使用）。
+- アカウント作成と配信には**住宅 IP のブラウザ**が必要。
+- **使い捨て受信箱**：Notion はサインアップ時に既知の使い捨て*ドメイン*を拒否します。
+  `--domain` は dispose.lol のメールバックエンドにルーティングされた**カスタム
+  ドメイン**を指定してください。
+- **タブごとに 1 つの CDP クライアント。** 同じタブでアダプタと対話的デバッグ
+  セッションを同時に動かさないでください。
+- アカウントと Cookie はローカルの `accounts.json` にのみ保存（gitignore 済み）。
+
+---
+
+## ライセンス
+
+[MIT](../LICENSE) © 2026 0xgetz

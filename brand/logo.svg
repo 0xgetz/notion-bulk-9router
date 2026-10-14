@@ -1,0 +1,41 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="notion-bulk-9router">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B0C10"/>
+      <stop offset="1" stop-color="#1F2430"/>
+    </linearGradient>
+    <linearGradient id="flow" x1="20" y1="20" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6EE7F9"/>
+      <stop offset="0.5" stop-color="#8B7CF6"/>
+      <stop offset="1" stop-color="#F472B6"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect x="4" y="4" width="112" height="112" rx="26" fill="url(#bg)" stroke="#2A3142" stroke-width="2"/>
+
+  <!-- Notion "N", left column -->
+  <g filter="url(#glow)">
+    <path d="M30 82V42c0-2.6 1.7-4.9 4.2-5.6l13.6-3.8c3.4-.9 6.8 1.7 6.8 5.2V82"
+          stroke="url(#flow)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M30 42l24.6 36" stroke="url(#flow)" stroke-width="7" stroke-linecap="round"/>
+  </g>
+
+  <!-- router hub -->
+  <circle cx="58" cy="60" r="4.5" fill="#8B7CF6"/>
+
+  <!-- fan-out -->
+  <g stroke="url(#flow)" stroke-width="3.5" stroke-linecap="round" opacity="0.92">
+    <path d="M62 60h8"/>
+    <path d="M70 60c12 0 8-16 20-16"/>
+    <path d="M70 60h20"/>
+    <path d="M70 60c12 0 8 16 20 16"/>
+  </g>
+
+  <circle cx="92" cy="44" r="5.5" fill="#6EE7F9"/>
+  <circle cx="92" cy="60" r="6.5" fill="#8B7CF6"/>
+  <circle cx="92" cy="76" r="5.5" fill="#F472B6"/>
+</svg>

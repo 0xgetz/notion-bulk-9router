@@ -1,0 +1,46 @@
+<svg width="640" height="160" viewBox="0 0 640 160" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="notion-bulk-9router">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="160" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B0C10"/>
+      <stop offset="1" stop-color="#141823"/>
+    </linearGradient>
+    <linearGradient id="flow" x1="24" y1="24" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6EE7F9"/>
+      <stop offset="0.5" stop-color="#8B7CF6"/>
+      <stop offset="1" stop-color="#F472B6"/>
+    </linearGradient>
+    <linearGradient id="txt" x1="170" y1="40" x2="620" y2="120" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E7ECF5"/>
+      <stop offset="1" stop-color="#9AA7C2"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect x="0" y="0" width="640" height="160" rx="20" fill="url(#bg)"/>
+
+  <!-- emblem -->
+  <g transform="translate(28,28)">
+    <rect x="0" y="0" width="104" height="104" rx="24" fill="#0B0C10" stroke="#2A3142" stroke-width="2"/>
+    <g filter="url(#glow)">
+      <path d="M26 80V38c0-2.6 1.7-4.9 4.2-5.6l14.6-4.1c3.4-.9 6.8 1.6 6.8 5.1V80"
+            stroke="url(#flow)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M26 38l25.6 42" stroke="url(#flow)" stroke-width="7" stroke-linecap="round"/>
+    </g>
+    <g stroke="url(#flow)" stroke-width="3.4" stroke-linecap="round" opacity="0.92">
+      <path d="M64 58h8"/>
+      <path d="M72 58c12 0 7-16 18-16"/>
+      <path d="M72 58h18"/>
+      <path d="M72 58c12 0 7 16 18 16"/>
+    </g>
+    <circle cx="90" cy="42" r="5" fill="#6EE7F9"/>
+    <circle cx="90" cy="58" r="6" fill="#8B7CF6"/>
+    <circle cx="90" cy="74" r="5" fill="#F472B6"/>
+  </g>
+
+  <!-- wordmark -->
+  <text x="164" y="82" font-family="Inter,Segoe UI,Helvetica,Arial,sans-serif" font-size="42" font-weight="700" fill="url(#txt)">notion-bulk</text>
+  <text x="164" y="120" font-family="Inter,Segoe UI,Helvetica,Arial,sans-serif" font-size="22" font-weight="600" letter-spacing="2" fill="#8B7CF6">→ 9ROUTER</text>
+</svg>

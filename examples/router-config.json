@@ -1,0 +1,14 @@
+{
+  "_comment": "Example: point any OpenAI-compatible client at 9Router, which routes notion/<model> through the adapter pool.",
+  "provider": {
+    "name": "9router",
+    "type": "openai",
+    "baseURL": "http://127.0.0.1:20128/v1",
+    "apiKey": "<your 9Router client key, e.g. sk-...>",
+    "models": [
+      "notion/baseten-deepseek-v4.1-flash",
+      "notion/grapefruit-zeppole",
+      "notion/sunflower-donut"
+    ]
+  }
+}
