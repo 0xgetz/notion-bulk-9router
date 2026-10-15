@@ -197,6 +197,57 @@ curl http://127.0.0.1:20128/v1/chat/completions \
 
 ---
 
+## Notion AI models
+
+The live catalog (39 models, pulled from `getAvailableModels` on 15 Oct 2026 —
+36 usable on Free, 3 need Business/Enterprise). Use any id as
+`notion/<id>`; `notion/auto` lets Notion pick. Run `node src/cli.js models`
+against a logged-in browser for the current list.
+
+| Model id | Name | Family | Plan |
+|---|---|---|---|
+| `notion/omniberry-sundae` | GPT-6.1 Sol | openai | Free |
+| `notion/orchid-muffin` | GPT-5.6 Terra | openai | Free |
+| `notion/omodi` | GPT-6 Luna | openai | Free |
+| `notion/albuquerque-quinn` | Opus 5.5 | anthropic | Free |
+| `notion/soursop-shortcake` | Grok 4.6 | xai | Free |
+| `notion/olive-jellyroll` | GPT-5.6 Luna | openai | Free |
+| `notion/orange-mousse` | GPT-5.6 Sol | openai | Free |
+| `notion/oatmeal-cookie` | GPT-5.2 | openai | Free |
+| `notion/oval-kumquat-medium` | GPT-5.4 | openai | Free |
+| `notion/opal-quince-medium` | GPT-5.5 | openai | Free |
+| `notion/vertex-gemini-3.5-flash` | Gemini 3.5 Flash | gemini | Free |
+| `notion/vertex-gemini-3.6-flash` | Gemini 3.6 Flash | gemini | Free |
+| `notion/grapefruit-zeppole` | Gemini 3.7 Flash | gemini | Free |
+| `notion/almond-croissant-low` | Sonnet 4.6 | anthropic | Free |
+| `notion/angel-cake-high` | Sonnet 5 | anthropic | Free |
+| `notion/achira-donut` | Sonnet 5.5 | anthropic | Free |
+| `notion/amla-jam` | Haiku 5.5 | anthropic | Free |
+| `notion/avocado-froyo-medium` | Opus 4.6 | anthropic | Free |
+| `notion/apricot-sorbet-high` | Opus 4.7 | anthropic | Free |
+| `notion/ambrosia-tart-high` | Opus 4.8 | anthropic | Free |
+| `notion/agave-flan` | Opus 5 | anthropic | Free |
+| `notion/oregon-grape-medium` | GPT-5.4 Mini | openai | Free |
+| `notion/otaheite-apple-medium` | GPT-5.4 Nano | openai | Free |
+| `notion/fireworks-kimi-k3` | Kimi K3 | mystery | Free |
+| `notion/baseten-deepseek-v4-pro` | DeepSeek V4 Pro | mystery | Free |
+| `notion/baseten-deepseek-v4-flash` | DeepSeek V4 Flash | mystery | Free |
+| `notion/baseten-deepseek-v4.1-flash` | DeepSeek V4.1 Flash | mystery | Free |
+| `notion/baseten-glm-5.2` | GLM 5.2 | mystery | Free |
+| `notion/baseten-glm-5.3` | GLM 5.3 | mystery | Free |
+| `notion/baseten-glm-5.3-flash` | GLM 5.3 Flash | mystery | Free |
+| `notion/xigua-mochi-medium` | Grok 4.3 | xai | Free |
+| `notion/strawberry-whoopiepie` | Grok 4.5 | xai | Free |
+| `notion/xinomavro-cake` | Grok Build 0.1 | xai | Free |
+| `notion/galette-medium-thinking` | Gemini 3.1 Pro | gemini | Free |
+| `notion/anthropic-haiku-4.5` | Haiku 4.5 | anthropic | Free |
+| `notion/gingerbread` | Gemini 3 Flash | gemini | Free |
+| `notion/orlando-quinn` | GPT-6 Astra | openai | Business/Enterprise |
+| `notion/assam-chai` | Fable 5.1 | anthropic | Business/Enterprise |
+| `notion/acai-budino-high` | Fable 5 | anthropic | Business/Enterprise |
+
+---
+
 ## How the browser relay works
 
 Notion's internal API behaves differently per operation:
