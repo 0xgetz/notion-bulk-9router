@@ -92,6 +92,9 @@ Detalles en [`STRUCTURE.md`](../STRUCTURE.md); la API interna en
 **Tu propio Chrome/Chromium** con puerto de depuración (usa un perfil dedicado, **no** el de uso diario):
 
 ```bash
+./scripts/browser.sh            # detecta Chromium automáticamente, abre :9222
+# PROXY=http://user:pass@host:port ./scripts/browser.sh   # proxy residencial
+# o manualmente:
 chromium --remote-debugging-port=9222 --user-data-dir=~/.chromium-notion
 # o: google-chrome --remote-debugging-port=9222 --user-data-dir=~/.chrome-notion
 export NOTION_CDP_URL="http://127.0.0.1:9222"
@@ -111,7 +114,8 @@ export NOTION_CDP_WS="wss://<host>/devtools/browser/<id>"
 ### 2. Crea cuentas
 
 ```bash
-node src/cli.js create --count 3 --domain midominio.tld
+node src/cli.js create --count 3            # bandeja por defecto: 22.do (…@hotmail.com/@outlook.com)
+node src/cli.js create --count 3 --inbox dispose --domain midominio.tld
 ```
 
 Cada cuenta se escribe en `accounts.json`.
@@ -229,9 +233,10 @@ Sin dependencias en `package.json`, sin `node_modules`. Incluye su propio
 
 - **Node ≥ 18** (usa `fetch` y `WebSocket` globales).
 - Un **navegador con IP residencial** para crear cuentas y servir.
-- **Bandeja desechable**: Notion rechaza *dominios* desechables conocidos al
-  registrarse. Apunta `--domain` a un **dominio personalizado** enrutado al
-  backend de correo de dispose.lol.
+- **Bandeja temporal**: el proveedor por defecto es **22.do** (`--inbox 22do`),
+  que entrega direcciones reales `@hotmail.com` / `@outlook.com` que Notion acepta.
+  Alternativa: `--inbox dispose` con un **dominio personalizado** (`--domain`).
+  Ambos sitios usan Cloudflare, así que el navegador necesita IP residencial.
 - **Un cliente CDP por pestaña.** No ejecutes el adaptador y una sesión de
   depuración interactiva sobre la misma pestaña a la vez.
 - Las cuentas y cookies solo viven en tu `accounts.json` local (ignorado por git).

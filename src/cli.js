@@ -4,7 +4,7 @@
 /**
  * notion-bulk-9router CLI.
  *
- *   create --count N [--domain d] [--router URL] [--adapter URL]   bulk-create + connect
+ *   create --count N [--inbox 22do|dispose] [--domain d] [--router URL] [--adapter URL]   bulk-create + connect
  *   extract [--out file]                                          capture session from a browser
  *   connect [--router URL] [--adapter URL]                        register adapter in 9Router
  *   serve                                                          run the OpenAI-compatible adapter
@@ -111,9 +111,10 @@ async function connectBrowser() {
     const cdp = await connectBrowser();
     const provisioner = new Provisioner({
       cdp,
-      domain: arg('domain', process.env.DISPOSE_DOMAIN || ''),
+      domain: arg('domain', process.env.INBOX_DOMAIN || ''),
       profileName: arg('name', process.env.NOTION_PROFILE_NAME || 'Notion User'),
       isolate: !flag('persist'),
+      inbox: { provider: arg('inbox', process.env.INBOX_PROVIDER || '22do') },
       storeFile: arg('file', process.env.ACCOUNTS_FILE || path.join(process.cwd(), 'accounts.json')),
       router: {
         base: arg('router', process.env.NINE_ROUTER_URL || ''),
@@ -137,7 +138,7 @@ async function connectBrowser() {
   console.log(`notion-bulk-9router
 
 Usage:
-  node src/cli.js create --count N [--domain <d>] [--router <url>] [--adapter <url>]
+  node src/cli.js create --count N [--inbox 22do|dispose] [--domain <d>] [--router <url>] [--adapter <url>]
   node src/cli.js extract
   node src/cli.js connect --router <url> --adapter <url>
   node src/cli.js serve

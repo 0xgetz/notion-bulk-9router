@@ -100,26 +100,28 @@ The toolkit drives a real Chrome/Chromium over the DevTools Protocol. Launch you
 own with a debug port (use a dedicated profile, **not** your everyday one):
 
 ```bash
+./scripts/browser.sh            # auto-detects Chromium, opens :9222
+# or manually:
 chromium --remote-debugging-port=9222 --user-data-dir=~/.chromium-notion
-# or: google-chrome --remote-debugging-port=9222 --user-data-dir=~/.chrome-notion
 export NOTION_CDP_URL="http://127.0.0.1:9222"
 ```
 
-The browser must exit through a **residential IP** — Notion (and the disposable
-inbox) reject or throttle datacenter IPs, and Notion's AI write endpoints refuse
+The browser must exit through a **residential IP** — Notion (and the temp-inbox
+site) reject or throttle datacenter IPs, and Notion's AI write endpoints refuse
 them outright. If your VPS has a datacenter IP, route the browser through a
-residential proxy, or point the toolkit at a remote browser you already run.
-
-**Or** any remote browser that exposes a CDP websocket endpoint:
+residential proxy, or point the toolkit at a remote browser you already run:
 
 ```bash
+PROXY=http://user:pass@host:port ./scripts/browser.sh   # per-browser proxy
+# or point at any remote CDP endpoint:
 export NOTION_CDP_WS="wss://<host>/devtools/browser/<id>"
 ```
 
 ### 2. Create accounts
 
 ```bash
-node src/cli.js create --count 3 --domain mydomain.tld
+node src/cli.js create --count 3            # default inbox: 22.do (…@hotmail.com/@outlook.com)
+node src/cli.js create --count 3 --inbox dispose --domain mydomain.tld
 ```
 
 Each account is written to `accounts.json`. Progress prints per step:
@@ -127,7 +129,7 @@ Each account is written to `accounts.json`. Progress prints per step:
 ```text
 Creating 3 account(s)...
   --- account 1/3 ---
-  mail: a4f2c1@mydomain.tld
+  mail: a4f2c1b873x+9k1pz2@hotmail.com
   notion: signing up
   mail: waiting for verification code
   mail: code 748213
@@ -187,7 +189,8 @@ curl http://127.0.0.1:20128/v1/chat/completions \
 
 ```text
 --count N              how many accounts to create            (create)
---domain <d>           inbox domain for dispose.lol           (create)
+--inbox <p>            temp-inbox provider: 22do|dispose      (create)
+--domain <d>           inbox domain (dispose custom domain)   (create)
 --name <s>             profile name for each workspace        (create)
 --router <url>         register into this 9Router             (create/connect)
 --adapter <url>        adapter base URL                       (create/connect)
@@ -277,7 +280,8 @@ No `package.json` dependencies, no `node_modules`. The toolkit ships its own:
 - **`cdp.js`** — a from-scratch Chrome DevTools Protocol client (raw
   `WebSocket` + request/event plumbing).
 - **`browser-transport.js`** — evaluate-arbitrary-JS-in-a-tab helper.
-- **`dispose-mail.js`** — the disposable-inbox RPC client.
+- **`twodo-mail.js`** — the default temp-inbox client (22.do `@hotmail.com`/`@outlook.com`).
+- **`dispose-mail.js`** — the alternative custom-domain inbox client.
 
 Everything runs on Node's standard library, so `git clone && node src/cli.js …`
 just works.
@@ -289,10 +293,13 @@ just works.
 - **Node ≥ 18** (uses global `fetch` and `WebSocket`).
 - A **browser with a residential IP** for account creation and serving —
   your own Chrome/Chromium launched with `--remote-debugging-port`, or any
-  remote browser exposing a CDP websocket.
-- **Disposable inbox**: Notion rejects well-known disposable *domains* at signup.
-  Point `--domain` at a **custom domain** routed to the dispose.lol mailbox
-  backend; the toolkit reads the verification code from there.
+  remote browser exposing a CDP websocket. `scripts/browser.sh` launches one for
+  you and accepts `PROXY=` for a residential exit.
+- **Temp inbox**: the default provider is **22.do** (`--inbox 22do`), which hands
+  out real `@hotmail.com` / `@outlook.com` addresses that Notion accepts and
+  delivers to. It sits behind Cloudflare, so the driving browser needs a
+  residential IP. Alternatively `--inbox dispose` uses a dispose.lol mailbox on a
+  **custom domain** you control (`--domain`).
 - **One CDP client per tab.** Do not run the adapter and an interactive
   debugging session against the same tab at once — Notion's `fetch()` and CDP
   `Runtime.evaluate` will contend. Use separate tabs/browsers for parallel work.

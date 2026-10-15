@@ -92,6 +92,9 @@ Rincian lengkap di [`STRUCTURE.md`](../STRUCTURE.md); API internal di
 **Chrome/Chromium sendiri** dengan debug port (pakai profil khusus, **bukan** profil harian Anda):
 
 ```bash
+./scripts/browser.sh            # deteksi Chromium otomatis, buka :9222
+# PROXY=http://user:pass@host:port ./scripts/browser.sh   # proxy residensial
+# atau manual:
 chromium --remote-debugging-port=9222 --user-data-dir=~/.chromium-notion
 # atau: google-chrome --remote-debugging-port=9222 --user-data-dir=~/.chrome-notion
 export NOTION_CDP_URL="http://127.0.0.1:9222"
@@ -111,7 +114,8 @@ export NOTION_CDP_WS="wss://<host>/devtools/browser/<id>"
 ### 2. Buat akun
 
 ```bash
-node src/cli.js create --count 3 --domain domainku.tld
+node src/cli.js create --count 3            # inbox default: 22.do (…@hotmail.com/@outlook.com)
+node src/cli.js create --count 3 --inbox dispose --domain domainku.tld
 ```
 
 Setiap akun ditulis ke `accounts.json`.
@@ -229,8 +233,10 @@ Tanpa dependensi `package.json`, tanpa `node_modules`. Toolkit membawa sendiri
 
 - **Node ≥ 18** (memakai `fetch` dan `WebSocket` global).
 - **Browser ber-IP residensial** untuk membuat akun dan menyajikan.
-- **Inbox sekali-pakai**: Notion menolak *domain* sekali-pakai umum. Arahkan
-  `--domain` ke **domain kustom** yang diarahkan ke backend mailbox dispose.lol.
+- **Inbox sementara**: provider default adalah **22.do** (`--inbox 22do`), yang
+  memberi alamat `@hotmail.com` / `@outlook.com` asli yang diterima Notion.
+  Alternatif: `--inbox dispose` dengan **domain kustom** (`--domain`).
+  Keduanya di belakang Cloudflare, jadi browser butuh IP residensial.
 - **Satu klien CDP per tab.** Jangan menjalankan adapter dan sesi debug
   interaktif pada tab yang sama sekaligus.
 - Akun & cookie hanya ada di `accounts.json` lokal (di-gitignore).

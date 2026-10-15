@@ -122,9 +122,18 @@ await transport.evalInPage(`(async () => {
 
 Notion **rejects well-known disposable domains** (Gmail-style `+`/dotted
 addresses on `gmail.com` and similar) at step 1 with *"we could not reach the
-email address"*. A **custom-domain** inbox is accepted — the toolkit uses
-`dispose.lol` mailboxes, which are real-domain addresses on a disposable
-backend.
+email address"*. Two providers work:
+
+- **22.do** (default, `--inbox 22do`): issues real `@hotmail.com` / `@outlook.com`
+  addresses of the form `<random>+<tag>@hotmail.com`. Mail is read through
+  22.do's own JSON endpoints (`/action/mailbox/applyToken`, `/action/mailbox/message`,
+  `/content/<id>` → `/view/<id>`), all executed inside a live 22.do tab. See
+  `src/twodo-mail.js`.
+- **dispose.lol** (`--inbox dispose`): a mailbox on a **custom domain** you
+  control (`--domain`), read via its SvelteKit RPC. See `src/dispose-mail.js`.
+
+Both sites sit behind Cloudflare and refuse datacenter IPs, so the driving
+browser must exit through a residential IP.
 
 ## Known models (selection)
 

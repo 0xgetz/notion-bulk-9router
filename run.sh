@@ -7,11 +7,17 @@
 #   ./run.sh connect --router https://9router.com
 #
 # Browser connection (pick one):
-#   BU_CDP_WS       Browser Use cloud websocket (auto-provisioned in this env)
-#   NOTION_CDP_URL  local Chrome DevTools http endpoint (e.g. http://127.0.0.1:9222)
+#   NOTION_CDP_URL  local Chrome/Chromium DevTools http endpoint (default http://127.0.0.1:9222)
+#   NOTION_CDP_WS   a CDP websocket (e.g. a remote/cloud browser YOU provisioned)
+#
+# This project never ships or assumes any hosted-browser credential. Bring your
+# own Chromium (see scripts/browser.sh) or your own CDP websocket.
 #
 set -euo pipefail
 cd "$(dirname "$0")"
+
+# Default to a local Chromium debug endpoint when nothing else is set.
+export NOTION_CDP_URL="${NOTION_CDP_URL:-http://127.0.0.1:9222}"
 
 if [[ "${1:-}" == "serve" ]]; then
   ADAPTER_PORT="${ADAPTER_PORT:-8790}" exec node src/cli.js serve

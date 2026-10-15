@@ -8,7 +8,8 @@ notion-bulk-9router/
 ├── src/                       ── THE ENGINE ─────────────────────────────
 │   ├── provision.js           ── orchestrator: inbox → signup → session → 9Router
 │   ├── notion-signup.js       ── drives the Notion signup wizard in the browser
-│   ├── dispose-mail.js        ── disposable inbox (dispose.lol RPC + Turnstile)
+│   ├── twodo-mail.js          ── default temp inbox (22.do @hotmail/@outlook)
+│   ├── dispose-mail.js        ── alternative inbox (dispose.lol RPC + Turnstile)
 │   ├── notion.js              ── Notion AI driver (threads, transcript, models)
 │   ├── browser-transport.js   ── runs fetch() inside the live Notion tab (residential IP)
 │   ├── cdp.js                 ── zero-dep Chrome DevTools Protocol client
@@ -90,7 +91,7 @@ Notion answer `400`.
 
 ```text
  create inbox ──► signup wizard ──► verify code ──► extract token_v2 ──► store
-   dispose.lol     notion.com        inbox poll        Network.getCookies    accounts.json
+   22.do inbox     notion.com        inbox poll        Network.getCookies    accounts.json
         │                                                                        │
         └────────────────────────── repeat per --count ──────────────────────────┘
                                                                                  │

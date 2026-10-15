@@ -95,12 +95,40 @@ class BrowserTransport {
 
   /** Navigate the attached tab to a URL and wait for load. */
   async navigate(url) {
-    const loaded = this.cdp
-      .waitFor('Page.loadEventFired', { timeoutMs: 30000, sessionId: this.sessionId })
-      .catch(() => {});
-    await this.cdp.send('Page.navigate', { url }, this.sessionId).catch(() => {});
-    await loaded;
-    await sleep(1000);
+    // Skip a real navigation when we are already on the target URL; some SPAs
+    // (e.g. 22.do) react badly to a reload mid-flow and it also avoids a
+    // needless execution-context teardown.
+    const current = await this.evalInPage('location.href').catch(() => '');
+    if (current !== url) {
+      const loaded = this.cdp
+        .waitFor('Page.loadEventFired', { timeoutMs: 30000, sessionId: this.sessionId })
+        .catch(() => {});
+      await this.cdp.send('Page.navigate', { url }, this.sessionId).catch(() => {});
+      await loaded;
+    }
+    // Wait until the document is actually interactive/complete. `loadEventFired`
+    // can arrive before a client-side router has replaced the execution context,
+    // which makes the next evaluate fail with "Inspected target navigated".
+    await this._waitForReady();
+  }
+
+  /** Poll document.readyState until it settles (or timeout). */
+  async _waitForReady(timeoutMs = 20000) {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      try {
+        const state = await this.evalInPage('document.readyState');
+        if (state === 'complete' || state === 'interactive') {
+          // One extra settle tick for late client-side render.
+          await sleep(600);
+          const again = await this.evalInPage('document.readyState').catch(() => '');
+          if (again === 'complete') return;
+        }
+      } catch {
+        /* execution context mid-teardown; retry */
+      }
+      await sleep(500);
+    }
   }
 
   /** A convenience: open a tab on a specific origin and attach to it. */

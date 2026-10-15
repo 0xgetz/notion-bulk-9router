@@ -87,6 +87,9 @@ notion-bulk create --count 5 --router http://127.0.0.1:20128
 **自己的 Chrome/Chromium** 加调试端口（使用专用配置，**不要**用日常配置）：
 
 ```bash
+./scripts/browser.sh            # 自动检测 Chromium 并打开 :9222
+# PROXY=http://user:pass@host:port ./scripts/browser.sh   # 住宅代理
+# 或手动：
 chromium --remote-debugging-port=9222 --user-data-dir=~/.chromium-notion
 # 或：google-chrome --remote-debugging-port=9222 --user-data-dir=~/.chrome-notion
 export NOTION_CDP_URL="http://127.0.0.1:9222"
@@ -105,7 +108,8 @@ export NOTION_CDP_WS="wss://<host>/devtools/browser/<id>"
 ### 2. 创建账号
 
 ```bash
-node src/cli.js create --count 3 --domain 我的域名.tld
+node src/cli.js create --count 3            # 默认邮箱: 22.do (…@hotmail.com/@outlook.com)
+node src/cli.js create --count 3 --inbox dispose --domain 我的域名.tld
 ```
 
 每个账号写入 `accounts.json`。
@@ -222,8 +226,9 @@ Notion 自动选择。在已登录的浏览器上运行 `node src/cli.js models`
 
 - **Node ≥ 18**（使用全局 `fetch` 与 `WebSocket`）。
 - 创建账号与提供服务需要**住宅 IP 浏览器**。
-- **一次性邮箱**：Notion 在注册时会拒绝知名一次性*域名*。请把 `--domain`
-  指向一个路由到 dispose.lol 邮箱后端的**自定义域名**。
+- **临时邮箱**：默认提供商是 **22.do**（`--inbox 22do`），提供 Notion 能接收的
+  真实 `@hotmail.com` / `@outlook.com` 地址。备选：`--inbox dispose` 配合
+  **自定义域名**（`--domain`）。两者都在 Cloudflare 之后，浏览器需住宅 IP。
 - **每个标签页一个 CDP 客户端。** 不要同时对同一标签页运行适配器和交互式调试会话。
 - 账号与 cookie 仅存于本地 `accounts.json`（已 gitignore）。
 

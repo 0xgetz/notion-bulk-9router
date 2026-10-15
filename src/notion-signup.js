@@ -277,7 +277,12 @@ class NotionSignup {
       const els = [...document.querySelectorAll('div[role=button],button')];
       const b = els.find(e => e.innerText && e.innerText.trim() === 'Continue');
       if (!b) return 'nf';
-      b.click();
+      // A bare b.click() is sometimes ignored by Notion's React handlers (the
+      // name/profile step in particular); dispatch the real pointer sequence.
+      const fire = (t, C) => b.dispatchEvent(new C(t, { bubbles: true, cancelable: true, view: window }));
+      fire('pointerdown', PointerEvent); fire('mousedown', MouseEvent);
+      fire('pointerup', PointerEvent); fire('mouseup', MouseEvent);
+      fire('click', MouseEvent);
       return 'ok';
     })()`);
   }
@@ -291,7 +296,10 @@ class NotionSignup {
         el = [...document.querySelectorAll('*')].find(e => e.innerText && e.innerText.trim() === ${JSON.stringify(text)} && e.children.length <= 1);
       }
       if (!el) return 'nf';
-      el.click();
+      const fire = (t, C) => el.dispatchEvent(new C(t, { bubbles: true, cancelable: true, view: window }));
+      fire('pointerdown', PointerEvent); fire('mousedown', MouseEvent);
+      fire('pointerup', PointerEvent); fire('mouseup', MouseEvent);
+      fire('click', MouseEvent);
       return 'ok';
     })()`);
   }

@@ -5,7 +5,7 @@
  *
  * One account = one Notion workspace + one 9Router connection. The pipeline:
  *
- *   1. create a disposable inbox            (dispose-mail.js)
+ *   1. create a temp inbox                  (twodo-mail.js / dispose-mail.js)
  *   2. sign up on Notion + verify the code  (notion-signup.js)
  *   3. extract the session (token_v2 + ids)
  *   4. register the account with the running Notion adapter / 9Router
@@ -20,6 +20,7 @@ const fs = require('fs');
 const path = require('path');
 const { BrowserTransport } = require('./browser-transport');
 const { DisposeMail, findCode, DISPOSE_URL } = require('./dispose-mail');
+const { TwentytwoDoMail, GEN_URL: TWODO_URL } = require('./twodo-mail');
 const { NotionSignup, SIGNUP_URL } = require('./notion-signup');
 
 class AccountStore {
@@ -63,11 +64,11 @@ class Provisioner {
   /**
    * @param {object} opts
    * @param {object} opts.cdp           connected CDP client
-   * @param {string} [opts.domain]      dispose.lol custom domain ('' = auto)
+   * @param {string} [opts.domain]      inbox domain ('' = provider default)
    * @param {string} [opts.profileName]
    * @param {string} [opts.storeFile]   accounts.json path
    * @param {object} [opts.router]      { base, password, adapterUrl, prefix }
-   * @param {object} [opts.inbox]       { provider:'dispose' }
+   * @param {object} [opts.inbox]       { provider:'22do'|'dispose' }
    */
   constructor({ cdp, domain = '', profileName = 'Notion User', storeFile, router = {}, isolate = true, inbox = null, proxyPool = null }) {
     this.cdp = cdp;
@@ -75,6 +76,7 @@ class Provisioner {
     this.profileName = profileName;
     this.isolate = isolate;
     this.inbox = inbox;
+    this.inboxProvider = (inbox && inbox.provider) || '22do';
     this.proxyPool = proxyPool;
     this.store = new AccountStore(storeFile || path.join(process.cwd(), 'accounts.json'));
     this.router = router;
@@ -98,15 +100,23 @@ class Provisioner {
     const notionTransport = new BrowserTransport(this.cdp, { urlMatch: /app\.notion\.com|notion\.com/ });
 
     try {
-      // 1) Mint a mailbox by driving dispose.lol in the browser. It hands out
-      //    custom-domain inboxes (e.g. name@your.domain) that Notion both
-      //    accepts at signup AND actually delivers to.
+      // 1) Mint a temp inbox by driving the provider's site in the browser.
+      //    Default is 22.do: it hands out real @hotmail.com addresses that
+      //    Notion both accepts at signup AND actually delivers codes to.
+      //    dispose.lol (custom domains) is still available via provider:'dispose'.
       let mail;
       let email;
-      step('mail: opening dispose.lol');
-      mailTransport = new BrowserTransport(this.cdp, { urlMatch: /dispose\.lol/ });
-      await mailTransport.openInContext(contextId, DISPOSE_URL);
-      mail = new DisposeMail(mailTransport, { domain: this.domain });
+      if (this.inboxProvider === 'dispose') {
+        step('mail: opening dispose.lol');
+        mailTransport = new BrowserTransport(this.cdp, { urlMatch: /dispose\.lol/ });
+        await mailTransport.openInContext(contextId, DISPOSE_URL);
+        mail = new DisposeMail(mailTransport, { domain: this.domain });
+      } else {
+        step('mail: opening 22.do (temporary-outlook)');
+        mailTransport = new BrowserTransport(this.cdp, { urlMatch: /22\.do/ });
+        await mailTransport.openInContext(contextId, TWODO_URL);
+        mail = new TwentytwoDoMail(mailTransport, { domain: this.domain || 'hotmail.com' });
+      }
       email = await mail.createEmail();
       step(`mail: ${email}`);
 
@@ -189,7 +199,7 @@ class Provisioner {
     try {
       const { targetInfos } = await this.cdp.send('Target.getTargets', {}, null);
       const stale = targetInfos.filter(
-        (t) => t.type === 'page' && (/^about:blank$/.test(t.url) || /dispose\.lol/.test(t.url))
+        (t) => t.type === 'page' && (/^about:blank$/.test(t.url) || /dispose\.lol/.test(t.url) || /22\.do/.test(t.url))
       );
       // Keep one blank tab as the anchor; close the rest.
       let keptBlank = false;

@@ -91,6 +91,9 @@ notion-bulk create --count 5 --router http://127.0.0.1:20128
 **自前の Chrome/Chromium** をデバッグポート付きで（専用プロファイルを使い、**普段使いのプロファイルは使わない**）：
 
 ```bash
+./scripts/browser.sh            # Chromium を自動検出して :9222 で起動
+# PROXY=http://user:pass@host:port ./scripts/browser.sh   # 住宅プロキシ
+# または手動で:
 chromium --remote-debugging-port=9222 --user-data-dir=~/.chromium-notion
 # または: google-chrome --remote-debugging-port=9222 --user-data-dir=~/.chrome-notion
 export NOTION_CDP_URL="http://127.0.0.1:9222"
@@ -110,7 +113,8 @@ export NOTION_CDP_WS="wss://<host>/devtools/browser/<id>"
 ### 2. アカウント作成
 
 ```bash
-node src/cli.js create --count 3 --domain mydomain.tld
+node src/cli.js create --count 3            # 既定の受信箱: 22.do (…@hotmail.com/@outlook.com)
+node src/cli.js create --count 3 --inbox dispose --domain mydomain.tld
 ```
 
 各アカウントは `accounts.json` に書き込まれます。
@@ -228,9 +232,10 @@ Free で使えるのは 36、3 つは Business/Enterprise が必要）。id は
 
 - **Node ≥ 18**（グローバル `fetch` と `WebSocket` を使用）。
 - アカウント作成と配信には**住宅 IP のブラウザ**が必要。
-- **使い捨て受信箱**：Notion はサインアップ時に既知の使い捨て*ドメイン*を拒否します。
-  `--domain` は dispose.lol のメールバックエンドにルーティングされた**カスタム
-  ドメイン**を指定してください。
+- **一時受信箱**：既定のプロバイダは **22.do**（`--inbox 22do`）で、Notion が
+  受け付ける実在の `@hotmail.com` / `@outlook.com` アドレスを発行します。
+  代替：`--inbox dispose` で**カスタムドメイン**（`--domain`）。
+  どちらも Cloudflare 配下のため、ブラウザは住宅 IP が必要です。
 - **タブごとに 1 つの CDP クライアント。** 同じタブでアダプタと対話的デバッグ
   セッションを同時に動かさないでください。
 - アカウントと Cookie はローカルの `accounts.json` にのみ保存（gitignore 済み）。

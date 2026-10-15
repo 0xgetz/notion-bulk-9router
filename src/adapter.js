@@ -47,10 +47,28 @@ async function init() {
     const { BrowserTransport } = require('./browser-transport');
     cdpClient = new CDP(browser);
     await cdpClient.connect();
-    const transport = new BrowserTransport(cdpClient);
-    await transport.attach();
-    client = new NotionClient({ cookie, transport, preferTransport: true });
-    console.log('[adapter] backend: browser relay ->', transport.targetId);
+    // Prefer a tab that is already inside a live workspace (/chat or /ai). A
+    // leftover /onboarding or /signup tab is logged out of a workspace and
+    // makes getAvailableModels answer 400.
+    const transport = new BrowserTransport(cdpClient, {
+      urlMatch: /app\.notion\.com\/(chat|ai)/,
+    });
+    const attached = await transport
+      .attach()
+      .catch(() => null)
+      .then((t) => t || new BrowserTransport(cdpClient).attach());
+    if (!attached) throw new Error('no Notion tab found in the connected browser');
+    // Resolve the workspace from the live tab so listModels/chat carry the
+    // right spaceId (the client's own id may be empty in relay mode).
+    const ids = await probeWorkspace(transport).catch(() => ({}));
+    client = new NotionClient({
+      cookie,
+      transport,
+      preferTransport: true,
+      spaceId: ids.spaceId || process.env.NOTION_SPACE_ID || '',
+      userId: ids.userId || process.env.NOTION_USER_ID || '',
+    });
+    console.log('[adapter] backend: browser relay ->', transport.targetId, ids.spaceId ? `space ${ids.spaceId}` : '');
   } else if (cookie) {
     client = new NotionClient({ cookie });
     console.log('[adapter] backend: cookie (direct)');
@@ -60,6 +78,30 @@ async function init() {
   models = await client.listModels();
   ready = true;
   console.log(`[adapter] ${models.length} models available`);
+}
+
+/** Read the logged-in workspace id/space from the attached tab. */
+async function probeWorkspace(transport) {
+  const raw = await transport.evalInPage(`(async () => {
+    try {
+      const r = await fetch('https://app.notion.com/api/v3/getSpaces', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}'
+      });
+      const t = await r.text();
+      const ids = [...t.matchAll(/"space_id":"([0-9a-f-]{36})"/g)].map((x) => x[1]);
+      const spaceId = [...new Set(ids)][0] || '';
+      const users = [...t.matchAll(/"id":"([0-9a-f-]{36})","/g)].map((x) => x[1]);
+      const userId = [...new Set(users)][0] || '';
+      return JSON.stringify({ spaceId, userId });
+    } catch (e) { return JSON.stringify({ spaceId: '', userId: '', err: String(e) }); }
+  })()`);
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return {};
+  }
 }
 
 /**
