@@ -146,29 +146,25 @@ class NotionSignup {
         typedName = true;
         await this._wait(500);
         await this._clickContinue();
-      } else if (has('Join teammates or create a workspace') && !handled.has('join')) {
-        handled.add('join');
+      } else if ((has('Join teammates') || has('create a workspace') || has('invited to')) && !handled.has('join-done')) {
+        // Only mark done once the screen actually advances; otherwise we keep
+        // re-clicking "Create new workspace" (the list of prior workspaces can
+        // be long, and the first click sometimes lands before React is ready).
         log('onboard: create new workspace');
-        const j = await this._clickStartsWith('Create new workspace');
-        if (j !== 'ok') await this._clickExact('Create new workspace');
+        const moved = await this._createWorkspace();
+        if (moved) handled.add('join-done');
       } else if (has('How do you want to use Notion') && !handled.has('usecase')) {
         handled.add('usecase');
         log('onboard: use case');
-        await this._clickStartsWith(ONBOARD.useCase);
-        await this._wait(700);
-        await this._clickContinue();
+        await this._pickOption(ONBOARD.useCase);
       } else if (has('What kind of work do you do') && !handled.has('role')) {
         handled.add('role');
         log('onboard: role');
-        await this._clickStartsWith(ONBOARD.role);
-        await this._wait(700);
-        await this._clickContinue();
+        await this._pickOption(ONBOARD.role);
       } else if (has('What do you want to get done') && !handled.has('goal')) {
         handled.add('goal');
         log('onboard: goal');
-        await this._clickStartsWith(ONBOARD.goal);
-        await this._wait(700);
-        await this._clickContinue();
+        await this._pickOption(ONBOARD.goal);
       } else if (has('Who else is on your team') && !handled.has('invite')) {
         handled.add('invite');
         log('onboard: invite (skip)');
@@ -222,15 +218,25 @@ class NotionSignup {
     const userId = map.get('notion_user_id') || '';
 
     // Wait for the workspace to finish provisioning, then probe with retries.
+    // A fresh workspace can take a while to appear; if the first probes come
+    // back empty, give the tab a nudge by (re)loading /chat, which kicks off
+    // server-side provisioning.
     let spaceId = '';
     let modelCount = 0;
-    const deadline = Date.now() + 60000;
+    const deadline = Date.now() + 90000;
+    let nudged = false;
+    let attempts = 0;
     while (Date.now() < deadline) {
       const probe = await this._probeWorkspace();
+      attempts++;
       if (probe.spaceId) {
         spaceId = probe.spaceId;
         modelCount = probe.modelCount || 0;
         if (modelCount > 0) break;
+      } else if (!nudged && attempts >= 4) {
+        nudged = true;
+        await this.transport.navigate('https://app.notion.com/chat').catch(() => {});
+        await this._wait(6000);
       }
       await this._wait(3000);
     }
@@ -294,16 +300,88 @@ class NotionSignup {
    * Click the first button whose text STARTS WITH `text`. Notion's onboarding
    * option cards render as "For work\nTrack projects, company goals, ...", so an
    * exact match never fires — a prefix match is what reliably selects them.
+   *
+   * A bare `el.click()` is sometimes ignored by Notion's React handlers; we
+   * dispatch the full pointer/mouse event sequence instead, which is what the
+   * browser produces for a real click and is reliably accepted.
    */
   async _clickStartsWith(text) {
     return this.transport.evalInPage(`(() => {
-      const btns = [...document.querySelectorAll('div[role=button],button,[role=button]')];
-      const el = btns.find(e => e.innerText && e.innerText.trim().split('\\n')[0].trim().toLowerCase() === ${JSON.stringify(text)}.toLowerCase())
-              || btns.find(e => e.innerText && e.innerText.trim().toLowerCase().startsWith(${JSON.stringify(text)}.toLowerCase()));
-      if (!el) return 'nf';
-      el.click();
+      const wanted = ${JSON.stringify(text)}.toLowerCase();
+      const cands = [...document.querySelectorAll('div[role=button],button,[role=button]')];
+      const firstLine = (e) => (e.innerText || '').trim().split('\\n')[0].trim().toLowerCase();
+      // Prefer an element whose first line matches exactly (the card itself),
+      // then fall back to a whole-text prefix match.
+      let matches = cands.filter(e => firstLine(e) === wanted);
+      if (!matches.length) matches = cands.filter(e => (e.innerText || '').trim().toLowerCase().startsWith(wanted));
+      if (!matches.length) return 'nf';
+      // Pick the smallest matching element: the leaf card, not a wrapping list.
+      matches.sort((a, b) => (a.innerText || '').length - (b.innerText || '').length);
+      const el = matches[0];
+      const fire = (type, Ctor) => el.dispatchEvent(new Ctor(type, { bubbles: true, cancelable: true, view: window }));
+      fire('pointerdown', PointerEvent); fire('mousedown', MouseEvent);
+      fire('pointerup', PointerEvent); fire('mouseup', MouseEvent);
+      fire('click', MouseEvent);
       return 'ok';
     })()`);
+  }
+
+  /**
+   * Press "Create new workspace" on the join screen. The list of previously
+   * created workspaces is often very long (the same mail domain is reused), so
+   * the button sits far down the page: scroll it into view and click it, then
+   * wait for the wizard to move on. Retried a few times.
+   */
+  async _createWorkspace() {
+    const deadline = Date.now() + 60000;
+    while (Date.now() < deadline) {
+      const clicked = await this.transport.evalInPage(`(() => {
+        const cands = [...document.querySelectorAll('div[role=button],button,[role=button]')];
+        const firstLine = (e) => (e.innerText || '').trim().split('\\n')[0].trim().toLowerCase();
+        const matches = cands.filter(e => firstLine(e) === 'create new workspace');
+        if (!matches.length) return 'nf';
+        const el = matches[0];
+        el.scrollIntoView({ block: 'center' });
+        const fire = (t, C) => el.dispatchEvent(new C(t, { bubbles: true, cancelable: true, view: window }));
+        fire('pointerdown', PointerEvent); fire('mousedown', MouseEvent);
+        fire('pointerup', PointerEvent); fire('mouseup', MouseEvent);
+        fire('click', MouseEvent);
+        return 'ok';
+      })()`);
+      if (clicked === 'ok') {
+        const moved = await this._waitUntil(async () => {
+          const t = await this.transport.evalInPage('document.body.innerText').catch(() => '');
+          return t.includes('How do you want to use Notion') ||
+                 t.includes('Customize your profile') ||
+                 t.includes('What kind of work do you do');
+        }, 8000);
+        if (moved) return true;
+      }
+      await this._wait(1200);
+    }
+    return false;
+  }
+
+  /**
+   * Select an onboarding option card (matched by prefix) and press Continue.
+   * The main loop re-checks which screen we are on, so a single attempt is
+   * enough here; it retries only if the card was not found.
+   */
+  async _pickOption(cardText) {
+    const r = await this._clickStartsWith(cardText);
+    await this._wait(900);
+    await this._clickContinue();
+    await this._wait(900);
+    return r === 'ok';
+  }
+
+  async _waitUntil(pred, timeoutMs) {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      if (await pred()) return true;
+      await this._wait(700);
+    }
+    return false;
   }
 
   async _waitForText(text, timeoutMs) {

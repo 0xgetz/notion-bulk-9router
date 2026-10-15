@@ -179,8 +179,32 @@ class Provisioner {
     }
   }
 
+  /**
+   * Close leftover throwaway tabs (about:blank and ad-heavy disposable-inbox
+   * tabs) so a long debugging session does not pile up targets. A browser
+   * choked with stale tabs makes CDP `Runtime.evaluate` slow or time out
+   * mid-signup, so this runs once before a batch.
+   */
+  async sweepStaleTabs() {
+    try {
+      const { targetInfos } = await this.cdp.send('Target.getTargets', {}, null);
+      const stale = targetInfos.filter(
+        (t) => t.type === 'page' && (/^about:blank$/.test(t.url) || /dispose\.lol/.test(t.url))
+      );
+      // Keep one blank tab as the anchor; close the rest.
+      let keptBlank = false;
+      for (const t of stale) {
+        if (/^about:blank$/.test(t.url) && !keptBlank) { keptBlank = true; continue; }
+        await this.cdp.send('Target.closeTarget', { targetId: t.targetId }, null).catch(() => {});
+      }
+    } catch {
+      /* best effort */
+    }
+  }
+
   /** Create N accounts sequentially. */
   async createMany(count, { onStep } = {}) {
+    await this.sweepStaleTabs();
     const out = [];
     for (let i = 0; i < count; i++) {
       if (onStep) onStep(`--- account ${i + 1}/${count} ---`);

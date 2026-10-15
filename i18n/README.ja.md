@@ -88,17 +88,23 @@ notion-bulk create --count 5 --router http://127.0.0.1:20128
 
 ### 1. ブラウザを準備
 
-**Browser Use cloud**（最も簡単 — 受信箱の Turnstile も自動解決）：
+**自前の Chrome/Chromium** をデバッグポート付きで（専用プロファイルを使い、**普段使いのプロファイルは使わない**）：
 
 ```bash
-export BU_CDP_WS="wss://<あなたの-cdp-エンドポイント>"
+chromium --remote-debugging-port=9222 --user-data-dir=~/.chromium-notion
+# または: google-chrome --remote-debugging-port=9222 --user-data-dir=~/.chrome-notion
+export NOTION_CDP_URL="http://127.0.0.1:9222"
 ```
 
-**または**デバッグポート付きの自前 Chrome：
+ブラウザは**住宅用IP**から出る必要があります — Notion（および使い捨て受信箱）は
+データセンターIPを拒否/制限し、Notion AI の書き込みエンドポイントは完全に拒否します。
+VPS がデータセンターIPの場合、ブラウザを住宅用プロキシ経由にしてください。すでに
+運用中のリモートブラウザを指定してもかまいません。
+
+**または** CDP ウェブソケットを公開する任意のリモートブラウザ：
 
 ```bash
-google-chrome --remote-debugging-port=9222 --user-data-dir=~/.chrome-notion
-export NOTION_CDP_URL="http://127.0.0.1:9222"
+export NOTION_CDP_WS="wss://<host>/devtools/browser/<id>"
 ```
 
 ### 2. アカウント作成

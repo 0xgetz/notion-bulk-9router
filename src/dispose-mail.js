@@ -6,7 +6,7 @@
  * Creates custom-domain temporary inboxes and reads their mail. dispose.lol is a
  * SvelteKit app whose "remote" RPCs are same-origin and gated by a Cloudflare
  * Turnstile token, so creation is done by driving the site's own UI inside a
- * browser (Browser Use cloud browsers solve Turnstile automatically). Mail is
+ * real browser (the browser solves Turnstile automatically). Mail is
  * read through the same-origin `getMailboxMessages` RPC.
  *
  * The driver is transport-agnostic: pass anything with `evalInPage(expr)` and

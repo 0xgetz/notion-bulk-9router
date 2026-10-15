@@ -89,17 +89,23 @@ Rincian lengkap di [`STRUCTURE.md`](../STRUCTURE.md); API internal di
 
 ### 1. Siapkan browser
 
-**Browser Use cloud** (termudah — juga menyelesaikan Turnstile inbox otomatis):
+**Chrome/Chromium sendiri** dengan debug port (pakai profil khusus, **bukan** profil harian Anda):
 
 ```bash
-export BU_CDP_WS="wss://<endpoint-cdp-anda>"
+chromium --remote-debugging-port=9222 --user-data-dir=~/.chromium-notion
+# atau: google-chrome --remote-debugging-port=9222 --user-data-dir=~/.chrome-notion
+export NOTION_CDP_URL="http://127.0.0.1:9222"
 ```
 
-**atau** Chrome sendiri dengan debug port:
+Browser harus keluar lewat **IP residensial** — Notion (dan inbox sekali-pakai)
+menolak/membatasi IP datacenter, dan endpoint tulis Notion AI menolaknya mentah-mentah.
+Jika VPS Anda ber-IP datacenter, arahkan browser lewat proxy residensial, atau
+arahkan toolkit ke browser remote yang sudah Anda jalankan.
+
+**Atau** browser remote apa pun yang menyediakan endpoint websocket CDP:
 
 ```bash
-google-chrome --remote-debugging-port=9222 --user-data-dir=~/.chrome-notion
-export NOTION_CDP_URL="http://127.0.0.1:9222"
+export NOTION_CDP_WS="wss://<host>/devtools/browser/<id>"
 ```
 
 ### 2. Buat akun

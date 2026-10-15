@@ -15,7 +15,8 @@
  *   1. cookie  — pass a Notion Cookie header (`NOTION_COOKIE`, must contain
  *                token_v2). Fast, no browser needed, but Notion rejects the AI
  *                write endpoints for flagged datacenter IPs.
- *   2. browser — point `BU_CDP_WS` (or `NOTION_CDP_WS`) at a Chrome with the
+ *   2. browser — point `NOTION_CDP_WS` (a CDP websocket) or `NOTION_CDP_URL`
+ *                (a local Chrome/Chromium debug port) at a browser with the
  *                Notion tab logged in. Each call is executed inside that tab,
  *                so it rides the browser's residential IP and cookie jar.
  *                Works even from a datacenter host.
@@ -37,21 +38,14 @@ let models = [];
 let ready = false;
 let lastError = null;
 
-/** Establish the Notion client: browser relay if a CDP ws is configured, else cookie. */
+/** Establish the Notion client: browser relay if a browser is configured, else cookie. */
 async function init() {
-  const ws = process.env.NOTION_CDP_WS || process.env.BU_CDP_WS;
   const cookie = process.env.NOTION_COOKIE || '';
-  if (ws) {
+  const browser = await resolveBrowserWs();
+  if (browser) {
     const { CDP } = require('./cdp');
     const { BrowserTransport } = require('./browser-transport');
-    const host = ws.replace(/^wss?:\/\//, '').split('/')[0];
-    let ver;
-    if (/^wss?:\/\//.test(ws) && ws.endsWith('/json/version') === false && !/\/devtools\//.test(ws)) {
-      ver = { webSocketDebuggerUrl: ws };
-    } else {
-      ver = await fetch('https://' + host + '/json/version').then((r) => r.json());
-    }
-    cdpClient = new CDP(ver.webSocketDebuggerUrl);
+    cdpClient = new CDP(browser);
     await cdpClient.connect();
     const transport = new BrowserTransport(cdpClient);
     await transport.attach();
@@ -61,11 +55,34 @@ async function init() {
     client = new NotionClient({ cookie });
     console.log('[adapter] backend: cookie (direct)');
   } else {
-    throw new Error('Set NOTION_COOKIE or BU_CDP_WS/NOTION_CDP_WS');
+    throw new Error('Set NOTION_CDP_WS (CDP websocket) or NOTION_CDP_URL (local Chrome/Chromium), or NOTION_COOKIE');
   }
   models = await client.listModels();
   ready = true;
   console.log(`[adapter] ${models.length} models available`);
+}
+
+/**
+ * Resolve a usable CDP websocket URL from the environment:
+ *   NOTION_CDP_WS  — a full ws(s)://…/devtools/browser/… endpoint, or a ws host
+ *                    whose /json/version we look up.
+ *   NOTION_CDP_URL — an http debug port (e.g. http://127.0.0.1:9222) for a
+ *                    local Chrome/Chromium launched with --remote-debugging-port.
+ * Returns '' when neither is set.
+ */
+async function resolveBrowserWs() {
+  const ws = process.env.NOTION_CDP_WS || '';
+  if (ws) {
+    if (/\/devtools\//.test(ws)) return ws;
+    const host = ws.replace(/^wss?:\/\//, '').split('/')[0];
+    const scheme = /^ws:\/\//.test(ws) ? 'http' : 'https';
+    return (await fetch(`${scheme}://${host}/json/version`).then((r) => r.json())).webSocketDebuggerUrl;
+  }
+  const url = process.env.NOTION_CDP_URL || '';
+  if (url) {
+    return (await fetch(`${url.replace(/\/$/, '')}/json/version`).then((r) => r.json())).webSocketDebuggerUrl;
+  }
+  return '';
 }
 
 function json(res, status, obj) {

@@ -11,9 +11,9 @@
  *   models                                                         list Notion models
  *   accounts [--file file]                                         show the account store
  *
- * Browser comes from BU_CDP_WS (Browser Use cloud) or NOTION_CDP_URL (local
- * Chrome with --remote-debugging-port). Each account needs its own browser
- * context/tab; run one browser per parallel worker.
+ * Browser comes from NOTION_CDP_WS (a CDP websocket, e.g. a cloud browser you
+ * provisioned) or NOTION_CDP_URL (a local Chrome/Chromium debug port). Each
+ * account needs its own browser context/tab; run one browser per parallel worker.
  */
 
 const path = require('path');
@@ -31,7 +31,7 @@ function flag(name) {
 
 async function connectBrowser() {
   const { CDP } = require('./cdp');
-  let ws = process.env.NOTION_CDP_WS || process.env.BU_CDP_WS;
+  let ws = process.env.NOTION_CDP_WS;
   if (!ws) {
     const url = process.env.NOTION_CDP_URL || 'http://127.0.0.1:9222';
     const v = await fetch(`${url}/json/version`).then((r) => r.json());
@@ -144,7 +144,7 @@ Usage:
   node src/cli.js models
   node src/cli.js accounts
 
-Browser: set BU_CDP_WS (Browser Use cloud) or NOTION_CDP_URL (local Chrome).
+Browser: set NOTION_CDP_WS (CDP websocket) or NOTION_CDP_URL (local Chrome/Chromium).
 `);
 })().catch((e) => {
   console.error('error:', e.message);

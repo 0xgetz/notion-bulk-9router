@@ -89,17 +89,23 @@ Detalles en [`STRUCTURE.md`](../STRUCTURE.md); la API interna en
 
 ### 1. Prepara un navegador
 
-**Browser Use cloud** (lo más fácil — también resuelve el Turnstile del correo):
+**Tu propio Chrome/Chromium** con puerto de depuración (usa un perfil dedicado, **no** el de uso diario):
 
 ```bash
-export BU_CDP_WS="wss://<tu-endpoint-cdp>"
+chromium --remote-debugging-port=9222 --user-data-dir=~/.chromium-notion
+# o: google-chrome --remote-debugging-port=9222 --user-data-dir=~/.chrome-notion
+export NOTION_CDP_URL="http://127.0.0.1:9222"
 ```
 
-**o** tu propio Chrome con puerto de depuración:
+El navegador debe salir por una **IP residencial** — Notion (y el correo temporal)
+rechazan o limitan las IP de datacenter, y los endpoints de escritura de Notion AI
+las rechazan directamente. Si tu VPS tiene IP de datacenter, enruta el navegador
+por un proxy residencial, o apunta la toolkit a un navegador remoto que ya ejecutes.
+
+**O** cualquier navegador remoto que exponga un websocket CDP:
 
 ```bash
-google-chrome --remote-debugging-port=9222 --user-data-dir=~/.chrome-notion
-export NOTION_CDP_URL="http://127.0.0.1:9222"
+export NOTION_CDP_WS="wss://<host>/devtools/browser/<id>"
 ```
 
 ### 2. Crea cuentas

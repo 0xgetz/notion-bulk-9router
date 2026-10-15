@@ -84,17 +84,22 @@ notion-bulk create --count 5 --router http://127.0.0.1:20128
 
 ### 1. 准备浏览器
 
-**Browser Use cloud**（最简单 — 还会自动处理邮箱的 Turnstile）：
+**自己的 Chrome/Chromium** 加调试端口（使用专用配置，**不要**用日常配置）：
 
 ```bash
-export BU_CDP_WS="wss://<你的-cdp-端点>"
+chromium --remote-debugging-port=9222 --user-data-dir=~/.chromium-notion
+# 或：google-chrome --remote-debugging-port=9222 --user-data-dir=~/.chrome-notion
+export NOTION_CDP_URL="http://127.0.0.1:9222"
 ```
 
-**或**自己的 Chrome 加调试端口：
+浏览器必须通过**住宅 IP** 出口 — Notion（以及临时邮箱）会拒绝或限速数据中心 IP，
+Notion AI 的写入端点更是直接拒绝。如果你的 VPS 是数据中心 IP，请让浏览器走住宅代理，
+或把工具指向你已经在运行的远程浏览器。
+
+**或**任何暴露 CDP websocket 的远程浏览器：
 
 ```bash
-google-chrome --remote-debugging-port=9222 --user-data-dir=~/.chrome-notion
-export NOTION_CDP_URL="http://127.0.0.1:9222"
+export NOTION_CDP_WS="wss://<host>/devtools/browser/<id>"
 ```
 
 ### 2. 创建账号

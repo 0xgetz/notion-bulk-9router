@@ -96,18 +96,24 @@ Full breakdown in [`STRUCTURE.md`](STRUCTURE.md); the internal API is documented
 
 ### 1. Get a browser to drive
 
-**Browser Use cloud** (easiest — it also auto-solves the disposable-inbox
-Turnstile and gives you a residential IP):
+The toolkit drives a real Chrome/Chromium over the DevTools Protocol. Launch your
+own with a debug port (use a dedicated profile, **not** your everyday one):
 
 ```bash
-export BU_CDP_WS="wss://<your-cdp-endpoint>"
+chromium --remote-debugging-port=9222 --user-data-dir=~/.chromium-notion
+# or: google-chrome --remote-debugging-port=9222 --user-data-dir=~/.chrome-notion
+export NOTION_CDP_URL="http://127.0.0.1:9222"
 ```
 
-**or** your own Chrome with a debug port:
+The browser must exit through a **residential IP** — Notion (and the disposable
+inbox) reject or throttle datacenter IPs, and Notion's AI write endpoints refuse
+them outright. If your VPS has a datacenter IP, route the browser through a
+residential proxy, or point the toolkit at a remote browser you already run.
+
+**Or** any remote browser that exposes a CDP websocket endpoint:
 
 ```bash
-google-chrome --remote-debugging-port=9222 --user-data-dir=~/.chrome-notion
-export NOTION_CDP_URL="http://127.0.0.1:9222"
+export NOTION_CDP_WS="wss://<host>/devtools/browser/<id>"
 ```
 
 ### 2. Create accounts
@@ -231,7 +237,8 @@ just works.
 
 - **Node ≥ 18** (uses global `fetch` and `WebSocket`).
 - A **browser with a residential IP** for account creation and serving —
-  Browser Use cloud, or your own Chrome launched with `--remote-debugging-port`.
+  your own Chrome/Chromium launched with `--remote-debugging-port`, or any
+  remote browser exposing a CDP websocket.
 - **Disposable inbox**: Notion rejects well-known disposable *domains* at signup.
   Point `--domain` at a **custom domain** routed to the dispose.lol mailbox
   backend; the toolkit reads the verification code from there.

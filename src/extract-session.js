@@ -7,8 +7,8 @@
  * env file. Run this whenever the session expires or you log into another
  * Notion account.
  *
- *   BU_CDP_WS=wss://...  node src/extract-session.js
- *   # or a local Chrome with --remote-debugging-port=9222
+ *   NOTION_CDP_WS=wss://...  node src/extract-session.js
+ *   # or a local Chrome/Chromium with --remote-debugging-port=9222
  *   NOTION_CDP_URL=http://127.0.0.1:9222 node src/extract-session.js
  *
  * The tab must already be logged into app.notion.com.
@@ -21,14 +21,15 @@ const { CDP } = require('./cdp');
 const UA = 'notion-9router/1.0';
 
 async function resolveWs() {
-  if (process.env.NOTION_CDP_WS) return process.env.NOTION_CDP_WS;
-  if (process.env.BU_CDP_WS) {
-    const host = process.env.BU_CDP_WS.replace(/^wss?:\/\//, '').split('/')[0];
-    const v = await fetch(`https://${host}/json/version`).then((r) => r.json());
+  if (process.env.NOTION_CDP_WS) {
+    if (/\/devtools\//.test(process.env.NOTION_CDP_WS)) return process.env.NOTION_CDP_WS;
+    const host = process.env.NOTION_CDP_WS.replace(/^wss?:\/\//, '').split('/')[0];
+    const scheme = /^ws:\/\//.test(process.env.NOTION_CDP_WS) ? 'http' : 'https';
+    const v = await fetch(`${scheme}://${host}/json/version`).then((r) => r.json());
     return v.webSocketDebuggerUrl;
   }
   const url = process.env.NOTION_CDP_URL || 'http://127.0.0.1:9222';
-  const v = await fetch(`${url}/json/version`).then((r) => r.json());
+  const v = await fetch(`${url.replace(/\/$/, '')}/json/version`).then((r) => r.json());
   return v.webSocketDebuggerUrl;
 }
 
